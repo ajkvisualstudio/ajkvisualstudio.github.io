@@ -5,6 +5,9 @@ import * as THREE from 'three';
    ========================================================= */
 const M = 'media/';
 const PROJECTS = [
+  { id:'showreel', hidden:true, cat:'', title:'AJK Showreel', client:'AJK Visual Studio', type:'Showreel', year:'2026',
+    desc:'A quick cut through our recent work — brand films, mashups, titles and 3D.',
+    media:[{v:'hero-loop'}] },
   { id:'agafi-desire', layout:'wide', cat:'Commercial', title:'The Art of Desire', client:'AGAFI Group', type:'Brand Film · 4K', year:'2026',
     cover:'agafi-desire-poster.jpg', preview:'agafi-desire-preview.mp4',
     desc:'A sensual, slow-burn luxury brand film for AGAFI Group — shot, edited and graded for a cinema-grade 4K master.',
@@ -376,7 +379,8 @@ function intro() {
    ========================================================= */
 const grid = document.getElementById('grid');
 const layoutClass = { wide: 'card wide', half: 'card', third: 'card third' };
-grid.innerHTML = PROJECTS.map((p, i) => `
+const GRID = PROJECTS.filter(p => !p.hidden);
+grid.innerHTML = GRID.map((p, i) => `
   <article class="${layoutClass[p.layout]}" data-id="${p.id}" data-cat="${p.cat}" data-cursor="View" data-reveal="up" data-delay="${(i % 3) * 90}">
     <div class="card-media">
       <img src="${M + p.cover}" alt="${p.title} — ${p.client}" loading="lazy" ${p.contain ? 'style="object-fit:contain;padding:12%"' : ''}>
@@ -385,7 +389,7 @@ grid.innerHTML = PROJECTS.map((p, i) => `
     <div class="card-meta"><span class="num">${String(i + 1).padStart(2, '0')}</span><h3>${p.title}</h3><p><b>${p.client}</b>${p.type}</p></div>
   </article>`).join('');
 
-const cats = ['All', ...new Set(PROJECTS.map(p => p.cat))];
+const cats = ['All', ...new Set(GRID.map(p => p.cat))];
 const filters = document.getElementById('filters');
 filters.innerHTML = cats.map((c, i) => `<button class="${i ? '' : 'on'}" data-f="${c}">${c}</button>`).join('');
 filters.addEventListener('click', e => {
