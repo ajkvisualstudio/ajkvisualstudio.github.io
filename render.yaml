@@ -1,0 +1,10 @@
+services:
+  - type: web
+    name: ajkvisualstudio
+    runtime: static
+    buildCommand: echo "static site, no build"
+    staticPublishPath: .
+    headers:
+      - path: /media/*
+        name: Cache-Control
+        value: public, max-age=604800
