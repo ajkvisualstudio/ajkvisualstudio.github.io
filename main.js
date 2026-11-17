@@ -224,236 +224,50 @@ function initStage() {
   };
 }
 
-/* =========================================================
-   WEBGL PARTICLE LOGO (studio section)
-   ========================================================= */
-const logoCanvas = document.getElementById('logoCanvas');
-let logoFx = null;
-function initLogo(img) {
-  const renderer = new THREE.WebGLRenderer({ canvas: logoCanvas, alpha: true, antialias: false });
-  renderer.setPixelRatio(DPR);
-  const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(35, 1, .1, 100);
-  camera.position.z = 10;
-  const group = new THREE.Group(); scene.add(group);
-  const u = { uTime: { value: 0 }, uScatter: { value: 1.4 }, uBurst: { value: 0 }, uSize: { value: 30 * DPR },
-    uMouse: { value: new THREE.Vector3(99, 99, 0) }, uMouseStrength: { value: 0 } };
-
-  const sw = innerWidth < 760 ? 170 : 250, sh = Math.round(sw * img.height / img.width);
-  const c = document.createElement('canvas'); c.width = sw; c.height = sh;
-  const ctx = c.getContext('2d', { willReadFrequently: true });
-  ctx.drawImage(img, 0, 0, sw, sh);
-  const data = ctx.getImageData(0, 0, sw, sh).data;
-  const W = 6, pos = [], col = [], rnd = [], seed = [];
-  for (let y = 0; y < sh; y++) for (let x = 0; x < sw; x++) {
-    const i = (y * sw + x) * 4, r = data[i], g = data[i + 1], b = data[i + 2];
-    if (.3 * r + .59 * g + .11 * b < 95) continue;
-    pos.push((x / sw - .5 + (Math.random() - .5) / sw) * W, -(y / sh - .5 + (Math.random() - .5) / sh) * W * sh / sw, (Math.random() - .5) * .12);
-    const k = Math.random() < .05 ? 1.4 : 1;
-    col.push(Math.min(1, r / 255 * k), Math.min(1, g / 255 * .95 * k), Math.min(1, b / 255 * .85 * k));
-    const th = Math.random() * 6.283, ph = Math.acos(2 * Math.random() - 1), m = 2 + Math.random() * 7;
-    rnd.push(Math.sin(ph) * Math.cos(th) * m, Math.sin(ph) * Math.sin(th) * m, Math.cos(ph) * m + 2);
-    seed.push(Math.random());
-  }
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
-  geo.setAttribute('aColor', new THREE.Float32BufferAttribute(col, 3));
-  geo.setAttribute('aRandom', new THREE.Float32BufferAttribute(rnd, 3));
-  geo.setAttribute('aSeed', new THREE.Float32BufferAttribute(seed, 1));
-  const points = new THREE.Points(geo, new THREE.ShaderMaterial({
-    uniforms: u, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-    vertexShader: /* glsl */`
-      uniform float uTime, uScatter, uBurst, uSize, uMouseStrength; uniform vec3 uMouse;
-      attribute vec3 aRandom; attribute vec3 aColor; attribute float aSeed;
-      varying vec3 vColor; varying float vAlpha;
-      void main(){
-        vec3 p = position;
-        p.x += sin(uTime*.6 + aSeed*6.28 + p.y*1.4)*.018;
-        p.y += cos(uTime*.5 + aSeed*6.28 + p.x*1.4)*.018;
-        p.z += sin(uTime*.9 + aSeed*12.)*.06;
-        vec2 d = p.xy - uMouse.xy; float f = smoothstep(1., 0., length(d)) * uMouseStrength;
-        p.xy += normalize(d + 1e-4) * f * .55; p.z += f * 1.2;
-        float s = clamp((uScatter + uBurst)*1.35 - aSeed*.35, 0., 2.); s *= s;
-        p += aRandom * s;
-        vec4 mv = modelViewMatrix * vec4(p, 1.);
-        gl_Position = projectionMatrix * mv;
-        gl_PointSize = uSize * (.55 + aSeed*.9) / -mv.z;
-        // diagonal light sweep across the logo every ~6s
-        float sweepX = mod(uTime, 6.) * 2.2 - 5.;
-        float band = smoothstep(.55, 0., abs(position.x + position.y * .5 - sweepX));
-        vColor = aColor * (1. + f*1.4) + vec3(1., .93, .78) * band * .9;
-        vAlpha = clamp(1. - s*.35, .1, 1.);
-      }`,
-    fragmentShader: /* glsl */`
-      varying vec3 vColor; varying float vAlpha;
-      void main(){ float d = length(gl_PointCoord - .5); if(d > .5) discard;
-        float a = smoothstep(.5, 0., d); gl_FragColor = vec4(vColor, a*a*vAlpha); }`,
-  }));
-  group.add(points);
-
-  // soft gold halo that breathes behind the logo
-  const halo = new THREE.Mesh(new THREE.PlaneGeometry(W * 1.25, W * 1.25), new THREE.ShaderMaterial({
-    uniforms: { uTime: u.uTime, uAmt: { value: 1 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
-    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
-    fragmentShader: `uniform float uTime, uAmt; varying vec2 vUv;
-      void main(){ float d = length(vUv - .5); float a = pow(smoothstep(.5, 0., d), 2.2) * (.16 + .06 * sin(uTime * 1.4)) * uAmt;
-        gl_FragColor = vec4(vec3(.85, .68, .38) * a, a); }`,
-  }));
-  halo.position.z = -.6;
-  group.add(halo);
-
-  // two poses: "center" matches the Blender intro film's final frame, "hero" sits top-right
-  const pose = { k: 1 };
-  const LOGO_H = 5.4 * .886;           // emblem height inside the logo image, in local units
-  let visH = 1, visW = 1;
-  function heroPose() {
-    if (camera.aspect > 1.15) { const s = Math.min(visH * .5 * 1.11, visW * .3); return { s, x: visW / 2 - s / 2 - visW * .07, y: visH * .17 }; }
-    const s = Math.min(visW * .6, visH * .3 * 1.11); return { s, x: 0, y: visH / 2 - s * .5 - visH * .12 };
-  }
-  function centerPose() {
-    const w = innerWidth, h = innerHeight, cover = w > 600;
-    const sc = cover ? Math.max(w / 1920, h / 1080) : Math.min(w / 1920, h / 1080), dispH = 1080 * sc;
-    const perPx = visH / logoCanvas.clientHeight;
-    const k = (.735 * dispH * perPx) / LOGO_H;
-    return { s: k * W, x: 0, y: -(.03 * dispH) * perPx };
-  }
-  function applyPose() {
-    const a = centerPose(), b = heroPose(), k = pose.k;
-    group.scale.setScalar((a.s + (b.s - a.s) * k) / W);
-    group.position.set(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k, 0);
-  }
-  function layout() {
-    const w = logoCanvas.clientWidth, h = logoCanvas.clientHeight;
-    renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
-    visH = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(17.5)); visW = visH * camera.aspect;
-    applyPose();
-  }
-  layout(); addEventListener('resize', layout);
-
-  const ndc = new THREE.Vector2(9, 9), mouse = new THREE.Vector2(), ray = new THREE.Raycaster();
-  const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0), hit = new THREE.Vector3();
-  let active = 0;
-  const sec = logoCanvas.parentElement;
-  sec.addEventListener('pointermove', e => { const r = logoCanvas.getBoundingClientRect();
-    ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); mouse.copy(ndc); active = 1; });
-  sec.addEventListener('pointerleave', () => active = 0);
-  // click the logo: particles burst and re-form
-  sec.addEventListener('click', e => {
-    if (e.target.closest('a,button')) return;
-    if (Math.hypot(u.uMouse.value.x, u.uMouse.value.y) > 3.4) return;
-    gsap.timeline().to(u.uBurst, { value: .5, duration: .35, ease: 'power3.out' })
-      .to(u.uBurst, { value: 0, duration: 2, ease: 'elastic.out(1, .45)' });
-  });
-
-  let visible = true;
-  new IntersectionObserver(([e]) => visible = e.isIntersecting).observe(logoCanvas);
-  return {
-    u, group, pose, applyPose,
-    render(t) {
-      if (!visible) return;
-      u.uTime.value = t;
-      group.rotation.y += (mouse.x * .22 - group.rotation.y) * .05;
-      group.rotation.x += (-mouse.y * .14 - group.rotation.x) * .05;
-      ray.setFromCamera(ndc, camera);
-      if (ray.ray.intersectPlane(plane, hit)) { points.worldToLocal(hit); u.uMouse.value.lerp(hit, .2); }
-      u.uMouseStrength.value += (active - u.uMouseStrength.value) * .06;
-      renderer.render(scene, camera);
-    }
-  };
-}
-
 const clock = new THREE.Clock();
 function tick() {
   requestAnimationFrame(tick);
-  const t = clock.getElapsedTime();
-  stage?.render(t);
-  logoFx?.render(t);
+  stage?.render(clock.getElapsedTime());
 }
 
 /* =========================================================
-   PRELOADER + INTRO
+   PRELOADER → HERO
    ========================================================= */
 const loadNum = document.getElementById('loadNum'), loadBar = document.getElementById('loadBar');
-const logoImg = new Image();
-const logoReady = new Promise(r => { logoImg.onload = r; logoImg.onerror = r; });
-logoImg.src = M + 'logo-gold-thumb.webp';
+const identVideo = document.getElementById('identVideo');
 const videoReady = new Promise(r => { if (heroVideo.readyState >= 2) r(); heroVideo.addEventListener('loadeddata', r, { once: true }); setTimeout(r, 4000); });
+const identReady = new Promise(r => { if (identVideo.readyState >= 2) r(); identVideo.addEventListener('loadeddata', r, { once: true }); setTimeout(r, 4000); });
 const pageReady = new Promise(r => document.readyState === 'complete' ? r() : addEventListener('load', r));
 const prog = { v: 0 };
 const draw = () => { loadNum.textContent = String(Math.round(prog.v)).padStart(2, '0'); loadBar.style.width = prog.v + '%'; };
 const progTween = gsap.to(prog, { v: 86, duration: 2.4, ease: 'power2.out', onUpdate: draw });
 
-const introVid = document.getElementById('introVideo');
-let introSeenEarly = false;
-try { introSeenEarly = sessionStorage.getItem('ajkIntro') === '1'; } catch (e) {}
-const introReady = new Promise(r => {
-  if (introSeenEarly || introVid.readyState >= 3) return r();
-  introVid.addEventListener('canplaythrough', r, { once: true }); introVid.load(); setTimeout(r, 6000);
-});
-Promise.all([logoReady, videoReady, introReady, pageReady, new Promise(r => setTimeout(r, 900))]).then(() => {
+Promise.all([videoReady, identReady, pageReady, new Promise(r => setTimeout(r, 900))]).then(() => {
   stage = initStage();
-  if (logoImg.naturalWidth) { try { logoFx = initLogo(logoImg); } catch (e) {} }
   heroVideo.play().catch(() => {});
   tick();
   progTween.kill();
   gsap.to(prog, { v: 100, duration: .5, ease: 'power2.inOut', onUpdate: draw, onComplete: intro });
 });
 
-const introEl = document.getElementById('intro'), introVideo = document.getElementById('introVideo');
-let introSeen = false;
-try { introSeen = sessionStorage.getItem('ajkIntro') === '1'; } catch (e) {}
-
 function intro() {
-  const playFilm = !reduce && !introSeen;
-  if (playFilm) {
-    if (logoFx) { logoFx.pose.k = 0; logoFx.applyPose(); logoFx.u.uScatter.value = 0; }
-    introEl.classList.add('on');
-    introVideo.currentTime = 0;
-    let handed = false;
-    const done = () => { if (handed) return; handed = true; handoff(); };
-    introVideo.play().catch(done);
-    introVideo.addEventListener('ended', done, { once: true });
-    introVideo.addEventListener('error', done, { once: true });
-    document.getElementById('skipIntro').addEventListener('click', done, { once: true });
-    const bar = document.getElementById('introBar');
-    introVideo.addEventListener('timeupdate', () => {
-      if (!introVideo.duration) return;
-      bar.style.width = (introVideo.currentTime / introVideo.duration * 100) + '%';
-      if (introVideo.currentTime >= introVideo.duration - .12) done();
-    });
-    setTimeout(done, ((introVideo.duration || 15) + 2.5) * 1000);   // safety net
-    gsap.timeline().to('#loader', { opacity: 0, duration: .8, ease: 'power2.out' }).set('#loader', { display: 'none' });
-  } else {
-    gsap.timeline().to('#loader', { yPercent: -100, duration: 1.2, ease: 'expo.inOut' }).set('#loader', { display: 'none' });
-    if (logoFx) {
-      // no film: logo assembles from a gold vortex in place
-      gsap.fromTo(logoFx.group.rotation, { z: -1.2 }, { z: 0, duration: 3.2, ease: 'expo.out', delay: .5 });
-      gsap.to(logoFx.u.uScatter, { value: 0, duration: 3.2, ease: 'expo.out', delay: .5, onComplete: logoScroll });
-    }
-    if (stage) gsap.to(stage.u.uIntro, { value: 1, duration: 2.4, ease: 'power2.out', delay: .6 });
-    setTimeout(revealHero, 700);
-  }
+  gsap.timeline().to('#loader', { yPercent: -100, duration: 1.2, ease: 'expo.inOut' }).set('#loader', { display: 'none' });
+  if (stage) gsap.to(stage.u.uIntro, { value: 1, duration: 2.4, ease: 'power2.out', delay: .6 });
+  // studio logo film starts from the beginning as the hero opens
+  identVideo.currentTime = 0; identVideo.play().catch(() => {});
+  gsap.fromTo('.hero-ident', { opacity: 0, scale: .92 }, { opacity: 1, scale: 1, duration: 2, ease: 'expo.out', delay: .8 });
+  gsap.to('.hero-ident', { yPercent: -25, opacity: 0, ease: 'none', immediateRender: false,
+    scrollTrigger: { trigger: '.hero', start: '20% top', end: 'bottom top', scrub: true } });
+  setTimeout(revealHero, 700);
 }
-
-// the film ends on the logo → particles take over in the exact same spot, then fly to the hero
-function handoff() {
-  try { sessionStorage.setItem('ajkIntro', '1'); } catch (e) {}
-  if (logoFx) { logoFx.pose.k = 0; logoFx.applyPose(); logoFx.u.uScatter.value = 0; }
-  gsap.to(introEl, { opacity: 0, duration: 1.1, ease: 'power2.inOut', onComplete: () => { introEl.classList.remove('on'); introVideo.pause(); } });
-  if (stage) gsap.to(stage.u.uIntro, { value: 1, duration: 2.2, ease: 'power2.out', delay: .7 });
-  if (logoFx) {
-    gsap.timeline({ delay: 1 })
-      .to(logoFx.u.uBurst, { value: .22, duration: .6, ease: 'power2.out' }, 0)
-      .to(logoFx.pose, { k: 1, duration: 1.8, ease: 'expo.inOut', onUpdate: logoFx.applyPose }, 0)
-      .to(logoFx.u.uBurst, { value: 0, duration: 1.6, ease: 'elastic.out(1, .5)' }, 1.2)
-      .add(logoScroll);
-  }
-  setTimeout(revealHero, 1600);
-}
-
-function logoScroll() {
-  ScrollTrigger.create({ trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true,
-    onUpdate: s => { logoFx.u.uScatter.value = s.progress * 1.2; } });
-}
+// plays the reveal once and holds on the gold logo; replays when you scroll back up to it
+let identLeft = false;
+new IntersectionObserver(([e]) => {
+  if (!e.isIntersecting) { identLeft = true; identVideo.pause(); return; }
+  if (identLeft && identVideo.ended) identVideo.currentTime = 0;
+  identLeft = false;
+  if (!identVideo.ended) identVideo.play().catch(() => {});
+}).observe(identVideo);
 
 function revealHero() {
   document.querySelectorAll('.hero [data-reveal]').forEach(el => {
