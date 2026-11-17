@@ -235,7 +235,7 @@ function initLogo(img) {
   const scene = new THREE.Scene(), camera = new THREE.PerspectiveCamera(35, 1, .1, 100);
   camera.position.z = 10;
   const group = new THREE.Group(); scene.add(group);
-  const u = { uTime: { value: 0 }, uScatter: { value: 1.4 }, uSize: { value: 30 * DPR },
+  const u = { uTime: { value: 0 }, uScatter: { value: 1.4 }, uBurst: { value: 0 }, uSize: { value: 30 * DPR },
     uMouse: { value: new THREE.Vector3(99, 99, 0) }, uMouseStrength: { value: 0 } };
 
   const sw = innerWidth < 760 ? 170 : 250, sh = Math.round(sw * img.height / img.width);
@@ -262,7 +262,7 @@ function initLogo(img) {
   const points = new THREE.Points(geo, new THREE.ShaderMaterial({
     uniforms: u, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
     vertexShader: /* glsl */`
-      uniform float uTime, uScatter, uSize, uMouseStrength; uniform vec3 uMouse;
+      uniform float uTime, uScatter, uBurst, uSize, uMouseStrength; uniform vec3 uMouse;
       attribute vec3 aRandom; attribute vec3 aColor; attribute float aSeed;
       varying vec3 vColor; varying float vAlpha;
       void main(){
@@ -272,7 +272,7 @@ function initLogo(img) {
         p.z += sin(uTime*.9 + aSeed*12.)*.06;
         vec2 d = p.xy - uMouse.xy; float f = smoothstep(1., 0., length(d)) * uMouseStrength;
         p.xy += normalize(d + 1e-4) * f * .55; p.z += f * 1.2;
-        float s = clamp(uScatter*1.35 - aSeed*.35, 0., 2.); s *= s;
+        float s = clamp((uScatter + uBurst)*1.35 - aSeed*.35, 0., 2.); s *= s;
         p += aRandom * s;
         vec4 mv = modelViewMatrix * vec4(p, 1.);
         gl_Position = projectionMatrix * mv;
@@ -290,17 +290,42 @@ function initLogo(img) {
   }));
   group.add(points);
 
+  // soft gold halo that breathes behind the logo
+  const halo = new THREE.Mesh(new THREE.PlaneGeometry(W * 1.25, W * 1.25), new THREE.ShaderMaterial({
+    uniforms: { uTime: u.uTime, uAmt: { value: 1 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.); }`,
+    fragmentShader: `uniform float uTime, uAmt; varying vec2 vUv;
+      void main(){ float d = length(vUv - .5); float a = pow(smoothstep(.5, 0., d), 2.2) * (.16 + .06 * sin(uTime * 1.4)) * uAmt;
+        gl_FragColor = vec4(vec3(.85, .68, .38) * a, a); }`,
+  }));
+  halo.position.z = -.6;
+  group.add(halo);
+
+  // two poses: "center" matches the Blender intro film's final frame, "hero" sits top-right
+  const pose = { k: 1 };
+  const LOGO_H = 5.4 * .886;           // emblem height inside the logo image, in local units
+  let visH = 1, visW = 1;
+  function heroPose() {
+    if (camera.aspect > 1.15) { const s = Math.min(visH * .5 * 1.11, visW * .3); return { s, x: visW / 2 - s / 2 - visW * .07, y: visH * .17 }; }
+    const s = Math.min(visW * .6, visH * .3 * 1.11); return { s, x: 0, y: visH / 2 - s * .5 - visH * .12 };
+  }
+  function centerPose() {
+    const w = innerWidth, h = innerHeight, cover = w > 600;
+    const sc = cover ? Math.max(w / 1920, h / 1080) : Math.min(w / 1920, h / 1080), dispH = 1080 * sc;
+    const perPx = visH / logoCanvas.clientHeight;
+    const k = (.735 * dispH * perPx) / LOGO_H;
+    return { s: k * W, x: 0, y: -(.03 * dispH) * perPx };
+  }
+  function applyPose() {
+    const a = centerPose(), b = heroPose(), k = pose.k;
+    group.scale.setScalar((a.s + (b.s - a.s) * k) / W);
+    group.position.set(a.x + (b.x - a.x) * k, a.y + (b.y - a.y) * k, 0);
+  }
   function layout() {
     const w = logoCanvas.clientWidth, h = logoCanvas.clientHeight;
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
-    const visH = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(17.5)), visW = visH * camera.aspect;
-    if (camera.aspect > 1.15) {   // desktop: upper right, above the pillars
-      const s = Math.min(visH * .5 * 1.11, visW * .3);
-      group.scale.setScalar(s / W); group.position.set(visW / 2 - s / 2 - visW * .07, visH * .17, 0);
-    } else {                      // mobile: top centre, above the headline
-      const s = Math.min(visW * .6, visH * .3 * 1.11);
-      group.scale.setScalar(s / W); group.position.set(0, visH / 2 - s * .5 - visH * .12, 0);
-    }
+    visH = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(17.5)); visW = visH * camera.aspect;
+    applyPose();
   }
   layout(); addEventListener('resize', layout);
 
@@ -311,11 +336,18 @@ function initLogo(img) {
   sec.addEventListener('pointermove', e => { const r = logoCanvas.getBoundingClientRect();
     ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); mouse.copy(ndc); active = 1; });
   sec.addEventListener('pointerleave', () => active = 0);
+  // click the logo: particles burst and re-form
+  sec.addEventListener('click', e => {
+    if (e.target.closest('a,button')) return;
+    if (Math.hypot(u.uMouse.value.x, u.uMouse.value.y) > 3.4) return;
+    gsap.timeline().to(u.uBurst, { value: .5, duration: .35, ease: 'power3.out' })
+      .to(u.uBurst, { value: 0, duration: 2, ease: 'elastic.out(1, .45)' });
+  });
 
   let visible = true;
   new IntersectionObserver(([e]) => visible = e.isIntersecting).observe(logoCanvas);
   return {
-    u, group,
+    u, group, pose, applyPose,
     render(t) {
       if (!visible) return;
       u.uTime.value = t;
@@ -350,7 +382,14 @@ const prog = { v: 0 };
 const draw = () => { loadNum.textContent = String(Math.round(prog.v)).padStart(2, '0'); loadBar.style.width = prog.v + '%'; };
 const progTween = gsap.to(prog, { v: 86, duration: 2.4, ease: 'power2.out', onUpdate: draw });
 
-Promise.all([logoReady, videoReady, pageReady, new Promise(r => setTimeout(r, 900))]).then(() => {
+const introVid = document.getElementById('introVideo');
+let introSeenEarly = false;
+try { introSeenEarly = sessionStorage.getItem('ajkIntro') === '1'; } catch (e) {}
+const introReady = new Promise(r => {
+  if (introSeenEarly || introVid.readyState >= 3) return r();
+  introVid.addEventListener('canplaythrough', r, { once: true }); introVid.load(); setTimeout(r, 6000);
+});
+Promise.all([logoReady, videoReady, introReady, pageReady, new Promise(r => setTimeout(r, 900))]).then(() => {
   stage = initStage();
   if (logoImg.naturalWidth) { try { logoFx = initLogo(logoImg); } catch (e) {} }
   heroVideo.play().catch(() => {});
@@ -359,30 +398,71 @@ Promise.all([logoReady, videoReady, pageReady, new Promise(r => setTimeout(r, 90
   gsap.to(prog, { v: 100, duration: .5, ease: 'power2.inOut', onUpdate: draw, onComplete: intro });
 });
 
+const introEl = document.getElementById('intro'), introVideo = document.getElementById('introVideo');
+let introSeen = false;
+try { introSeen = sessionStorage.getItem('ajkIntro') === '1'; } catch (e) {}
+
 function intro() {
-  gsap.timeline()
-    .to('#loader', { yPercent: -100, duration: 1.2, ease: 'expo.inOut' })
-    .set('#loader', { display: 'none' })
-    .add(() => {
-      document.querySelectorAll('.hero [data-reveal]').forEach(el => {
-        el.style.setProperty('--rv-delay', (+(el.dataset.delay || 0) / 1000) + 's'); el.setAttribute('data-rv', '');
-      });
-      observeReveals(document);
-      lenis.start();
-    }, '-=.5')
-    .from('.nav', { opacity: 0, y: -16, duration: 1.2, ease: 'expo.out' }, '-=.3');
+  const playFilm = !reduce && !introSeen;
+  if (playFilm) {
+    if (logoFx) { logoFx.pose.k = 0; logoFx.applyPose(); logoFx.u.uScatter.value = 0; }
+    introEl.classList.add('on');
+    introVideo.currentTime = 0;
+    let handed = false;
+    const done = () => { if (handed) return; handed = true; handoff(); };
+    introVideo.play().catch(done);
+    introVideo.addEventListener('ended', done, { once: true });
+    introVideo.addEventListener('error', done, { once: true });
+    document.getElementById('skipIntro').addEventListener('click', done, { once: true });
+    const bar = document.getElementById('introBar');
+    introVideo.addEventListener('timeupdate', () => {
+      if (!introVideo.duration) return;
+      bar.style.width = (introVideo.currentTime / introVideo.duration * 100) + '%';
+      if (introVideo.currentTime >= introVideo.duration - .12) done();
+    });
+    setTimeout(done, ((introVideo.duration || 15) + 2.5) * 1000);   // safety net
+    gsap.timeline().to('#loader', { opacity: 0, duration: .8, ease: 'power2.out' }).set('#loader', { display: 'none' });
+  } else {
+    gsap.timeline().to('#loader', { yPercent: -100, duration: 1.2, ease: 'expo.inOut' }).set('#loader', { display: 'none' });
+    if (logoFx) {
+      // no film: logo assembles from a gold vortex in place
+      gsap.fromTo(logoFx.group.rotation, { z: -1.2 }, { z: 0, duration: 3.2, ease: 'expo.out', delay: .5 });
+      gsap.to(logoFx.u.uScatter, { value: 0, duration: 3.2, ease: 'expo.out', delay: .5, onComplete: logoScroll });
+    }
+    if (stage) gsap.to(stage.u.uIntro, { value: 1, duration: 2.4, ease: 'power2.out', delay: .6 });
+    setTimeout(revealHero, 700);
+  }
+}
+
+// the film ends on the logo → particles take over in the exact same spot, then fly to the hero
+function handoff() {
+  try { sessionStorage.setItem('ajkIntro', '1'); } catch (e) {}
+  if (logoFx) { logoFx.pose.k = 0; logoFx.applyPose(); logoFx.u.uScatter.value = 0; }
+  gsap.to(introEl, { opacity: 0, duration: 1.1, ease: 'power2.inOut', onComplete: () => { introEl.classList.remove('on'); introVideo.pause(); } });
+  if (stage) gsap.to(stage.u.uIntro, { value: 1, duration: 2.2, ease: 'power2.out', delay: .7 });
   if (logoFx) {
-    // logo assembles from a gold vortex, then scatters as you scroll away
-    gsap.fromTo(logoFx.group.rotation, { z: -1.2 }, { z: 0, duration: 3.2, ease: 'expo.out', delay: .5 });
-    gsap.to(logoFx.u.uScatter, { value: 0, duration: 3.2, ease: 'expo.out', delay: .5, onComplete: () => {
-      ScrollTrigger.create({ trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true,
-        onUpdate: s => { logoFx.u.uScatter.value = s.progress * 1.2; } });
-    } });
+    gsap.timeline({ delay: 1 })
+      .to(logoFx.u.uBurst, { value: .22, duration: .6, ease: 'power2.out' }, 0)
+      .to(logoFx.pose, { k: 1, duration: 1.8, ease: 'expo.inOut', onUpdate: logoFx.applyPose }, 0)
+      .to(logoFx.u.uBurst, { value: 0, duration: 1.6, ease: 'elastic.out(1, .5)' }, 1.2)
+      .add(logoScroll);
   }
-  if (stage) {
-    gsap.to(stage.u.uIntro, { value: 1, duration: 2.4, ease: 'power2.out', delay: .6 });
-    gsap.to(stage.u.uScroll, { value: 1, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
-  }
+  setTimeout(revealHero, 1600);
+}
+
+function logoScroll() {
+  ScrollTrigger.create({ trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true,
+    onUpdate: s => { logoFx.u.uScatter.value = s.progress * 1.2; } });
+}
+
+function revealHero() {
+  document.querySelectorAll('.hero [data-reveal]').forEach(el => {
+    el.style.setProperty('--rv-delay', (+(el.dataset.delay || 0) / 1000) + 's'); el.setAttribute('data-rv', '');
+  });
+  observeReveals(document);
+  lenis.start();
+  gsap.fromTo('.nav', { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 1.2, ease: 'expo.out' });
+  if (stage) gsap.to(stage.u.uScroll, { value: 1, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
   gsap.to('.hero-body', { yPercent: -18, opacity: 0, ease: 'none', scrollTrigger: { trigger: '.hero', start: '30% top', end: 'bottom top', scrub: true } });
 }
 
@@ -454,7 +534,6 @@ function closeProject() {
 }
 document.getElementById('ovClose').addEventListener('click', closeProject);
 addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('open')) closeProject(); });
-document.querySelector('.hero-reel').addEventListener('click', e => openProject(e.currentTarget.dataset.project));
 
 /* =========================================================
    SCROLL EXTRAS

@@ -63,6 +63,8 @@ html.js [data-reveal=mask]:not([data-rv]){transform:translateY(108%)}
 
 /* nav */
 .nav{position:fixed;top:0;left:0;right:0;z-index:100;display:flex;align-items:center;justify-content:space-between;padding:26px var(--gutter);transition:background .5s,padding .5s,border-color .5s;border-bottom:1px solid transparent}
+html.js .nav{opacity:0}
+#cursor{z-index:195!important}
 .nav.scrolled{background:rgba(9,9,9,.78);backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);padding-top:14px;padding-bottom:14px;border-color:var(--line)}
 .wordmark{display:flex;align-items:center;gap:12px;font-size:13px;letter-spacing:.3em;text-transform:uppercase;font-weight:500}
 .wordmark b{font-weight:300;color:var(--ink-muted)}
@@ -183,6 +185,19 @@ html:not(.js) .statement>span{color:var(--ink)}
 .svc-col li:hover{color:var(--ink);padding-left:12px}
 .svc-col li:hover b{opacity:1;transform:none}
 @media (max-width:760px){.svc-cols{grid-template-columns:1fr}}
+
+/* intro (Blender logo film) */
+#intro{position:fixed;inset:0;z-index:190;background:#05070c;display:none}
+#intro.on{display:block}
+#intro video{width:100%;height:100%;object-fit:cover}
+.intro-vignette{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 55%,rgba(5,7,12,.7) 100%)}
+#skipIntro{position:absolute;right:var(--gutter);bottom:34px;font:inherit;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--ink);background:rgba(9,9,9,.35);border:1px solid var(--line-strong);border-radius:40px;padding:12px 20px;cursor:pointer;backdrop-filter:blur(8px);transition:all .4s}
+#skipIntro b{font-weight:300;color:var(--gold);margin-left:6px}
+#skipIntro:hover{background:var(--gold);color:var(--stage);border-color:var(--gold)}
+#skipIntro:hover b{color:var(--stage)}
+.intro-bar{position:absolute;left:var(--gutter);right:calc(var(--gutter) + 190px);bottom:54px;height:1px;background:var(--line)}
+.intro-bar i{display:block;height:100%;width:0;background:var(--gold)}
+@media (max-width:600px){.intro-bar{right:var(--gutter);bottom:100px}#intro video{object-fit:contain}}
 
 /* hero particle logo */
 #logoCanvas{position:absolute;inset:0;width:100%;height:100%;display:block;z-index:1;pointer-events:none}
