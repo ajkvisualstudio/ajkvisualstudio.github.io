@@ -233,32 +233,46 @@ function tick() {
 /* =========================================================
    PRELOADER → HERO
    ========================================================= */
-const loadNum = document.getElementById('loadNum'), loadBar = document.getElementById('loadBar');
 const identVideo = document.getElementById('identVideo');
-const videoReady = new Promise(r => { if (heroVideo.readyState >= 2) r(); heroVideo.addEventListener('loadeddata', r, { once: true }); setTimeout(r, 4000); });
-const identReady = new Promise(r => { if (identVideo.readyState >= 2) r(); identVideo.addEventListener('loadeddata', r, { once: true }); setTimeout(r, 4000); });
-const pageReady = new Promise(r => document.readyState === 'complete' ? r() : addEventListener('load', r));
-const prog = { v: 0 };
-const draw = () => { loadNum.textContent = String(Math.round(prog.v)).padStart(2, '0'); loadBar.style.width = prog.v + '%'; };
-const progTween = gsap.to(prog, { v: 86, duration: 2.4, ease: 'power2.out', onUpdate: draw });
+const videoReady = new Promise(r => { if (heroVideo.readyState >= 2) r(); heroVideo.addEventListener('loadeddata', r, { once: true }); setTimeout(r, 2500); });
+const identReady = new Promise(r => { if (identVideo.readyState >= 2) r(); identVideo.addEventListener('loadeddata', r, { once: true }); setTimeout(r, 2500); });
+const pageReady = new Promise(r => { if (document.readyState === 'complete') return r(); addEventListener('load', r); setTimeout(r, 2500); });   // don't wait for big videos
 
-Promise.all([videoReady, identReady, pageReady, new Promise(r => setTimeout(r, 900))]).then(() => {
+// loader: the AJK logo reveals itself, the name types in, a gold line draws
+const nameEl = document.querySelector('.loader-name');
+nameEl.innerHTML = nameEl.textContent.split('').map(c => c === ' ' ? '<span>&nbsp;</span>' : `<span>${c}</span>`).join('');
+const loaderIn = new Promise(r => {
+  setTimeout(r, 3600);   // timer backup: always open the site after the logo moment
+  gsap.timeline({ onComplete: r })
+    .fromTo('.loader-mark', { clipPath: 'inset(50% 0% 50% 0%)', scale: 1.25, filter: 'blur(14px) brightness(2)' },
+      { clipPath: 'inset(0% 0% 0% 0%)', scale: 1, filter: 'blur(0px) brightness(1)', duration: 1.6, ease: 'expo.out' })
+    .from('.loader-name span', { yPercent: 110, opacity: 0, duration: .9, stagger: .035, ease: 'expo.out' }, '-=.9')
+    .to('.loader-line', { scaleX: 1, duration: 1, ease: 'expo.inOut' }, '-=.7')
+    .to('.loader-tag', { opacity: 1, duration: .8 }, '-=.5')
+    .to({}, { duration: .6 });   // hold on the logo for a beat
+});
+
+Promise.all([videoReady, identReady, pageReady, loaderIn]).then(() => {
   stage = initStage();
   heroVideo.play().catch(() => {});
   tick();
-  progTween.kill();
-  gsap.to(prog, { v: 100, duration: .5, ease: 'power2.inOut', onUpdate: draw, onComplete: intro });
+  intro();
 });
 
+// curtains open: logo pushes toward camera, panels part, site appears
 function intro() {
-  gsap.timeline().to('#loader', { yPercent: -100, duration: 1.2, ease: 'expo.inOut' }).set('#loader', { display: 'none' });
-  if (stage) gsap.to(stage.u.uIntro, { value: 1, duration: 2.4, ease: 'power2.out', delay: .6 });
+  gsap.timeline()
+    .to('.loader-center', { scale: 1.12, opacity: 0, filter: 'blur(8px)', duration: .8, ease: 'power3.in' })
+    .to('.lp-top', { yPercent: -100, duration: 1.2, ease: 'expo.inOut' }, '-=.2')
+    .to('.lp-bot', { yPercent: 100, duration: 1.2, ease: 'expo.inOut' }, '<')
+    .set('#loader', { display: 'none' });
+  if (stage) gsap.to(stage.u.uIntro, { value: 1, duration: 2.4, ease: 'power2.out', delay: .7 });
   // studio logo film starts from the beginning as the hero opens
   identVideo.currentTime = 0; identVideo.play().catch(() => {});
-  gsap.fromTo('.hero-ident', { opacity: 0, scale: .92 }, { opacity: 1, scale: 1, duration: 2, ease: 'expo.out', delay: .8 });
+  gsap.fromTo('.hero-ident', { opacity: 0, scale: .9 }, { opacity: 1, scale: 1, duration: 2, ease: 'expo.out', delay: 1 });
   gsap.to('.hero-ident', { yPercent: -25, opacity: 0, ease: 'none', immediateRender: false,
     scrollTrigger: { trigger: '.hero', start: '20% top', end: 'bottom top', scrub: true } });
-  setTimeout(revealHero, 700);
+  setTimeout(revealHero, 900);
 }
 // plays the reveal once and holds on the gold logo; replays when you scroll back up to it
 let identLeft = false;
