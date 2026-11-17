@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>AJK Visual Studio</title>
-<meta name="description" content="AJK Visual Studio — film, edit, color, VFX and design studio in Dubai. Brand films, cinematic titles, mashups, key art and identity.">
+<meta name="description" content="AJK Visual Studio — a Dubai film, edit, colour and VFX studio founded by Akash John Kennedy. Brand films, cinematic titles, mashups, key art and identity.">
 <meta property="og:title" content="AJK Visual Studio">
-<meta property="og:description" content="Film · Edit · Color — Dubai">
+<meta property="og:description" content="Story-first films, edits and visual effects — Dubai">
 <meta property="og:image" content="media/logo-512.png">
 <meta name="theme-color" content="#090909">
 <link rel="icon" href="media/logo-512.png">
@@ -20,6 +20,7 @@
 
 <div id="loader">
   <div class="loader-top"><span class="eyebrow">AJK Visual Studio</span><span class="eyebrow quiet">Film · Edit · Color</span></div>
+  <img class="loader-logo" src="media/logo-gold-thumb.webp" alt="">
   <div class="loader-count"><span id="loadNum">0</span></div>
   <div class="loader-bar"><i id="loadBar"></i></div>
 </div>
@@ -27,25 +28,26 @@
 <div id="cursor"><span id="cursorText"></span></div>
 
 <header class="nav">
-  <a href="#top" class="wordmark"><img src="media/logo-gold-thumb.webp" alt=""><span>AJK <b>Visual Studio</b></span></a>
+  <a href="#top" class="wordmark"><span class="logo-shine"><img src="media/logo-gold-thumb.webp" alt=""></span><span>AJK <b>Visual Studio</b></span></a>
   <nav class="nav-links">
     <a href="#work">Work</a>
-    <a href="#reel">Film</a>
-    <a href="#services">Services</a>
-    <a href="#studio">Studio</a>
+    <a href="#services">Craft</a>
+    <a href="#founder">Founder</a>
     <a href="#process">Process</a>
+    <a href="#contact">Contact</a>
   </nav>
   <a href="#contact" class="nav-cta">Start a project</a>
 </header>
 
 <main id="top">
 
-  <!-- HERO: WebGL stage -->
+  <!-- HERO: WebGL stage + particle logo -->
   <section class="hero">
     <canvas id="stage"></canvas>
-    <video id="heroVideo" src="media/hero-loop.mp4" poster="media/hero-loop.jpg" muted loop playsinline autoplay crossorigin="anonymous"></video>
+    <canvas id="logoCanvas"></canvas>
+    <video id="heroVideo" src="media/hero-loop.mp4" poster="media/hero-loop-poster.jpg" muted loop playsinline autoplay></video>
     <div class="hero-body">
-      <div class="clip"><div class="eyebrow" data-reveal="mask">Film + creative studio · Dubai</div></div>
+      <div class="clip"><div class="eyebrow" data-reveal="mask">Film + visual effects studio · Dubai</div></div>
       <h1 class="h1">
         <span class="line"><span data-reveal="mask" data-delay="120">We craft the <span class="outline">frame</span></span></span>
         <span class="line"><span data-reveal="mask" data-delay="260">for unforgettable</span></span>
@@ -53,8 +55,11 @@
       </h1>
       <div class="hero-foot">
         <div class="hero-left">
-          <p class="lead" data-reveal="up" data-delay="700">One studio. Every frame.</p>
-          <a href="#work" class="hero-link" data-reveal="up" data-delay="900"><i></i><span>Selected work</span><b>↓</b></a>
+          <p class="lead" data-reveal="up" data-delay="700"><b>Story-first. Frame-perfect.</b> AJK Visual Studio crafts cinematic films, edits and visual effects for brands, stars and the communities who love them.</p>
+          <div class="hero-ctas" data-reveal="up" data-delay="900">
+            <a href="#work" class="hero-link"><i></i><span>Explore the work</span><b>↓</b></a>
+            <button class="hero-reel" type="button" data-project="showreel" data-cursor="Play"><span>▶</span> Watch showreel</button>
+          </div>
           <span class="hint" data-reveal="fade" data-delay="1200">Move to light the stage</span>
         </div>
         <nav class="pillars" aria-label="Our practices">
@@ -68,7 +73,7 @@
 
   <!-- TRUSTED BY -->
   <section class="trusted">
-    <div class="eyebrow quiet center" data-reveal="fade">Trusted by</div>
+    <div class="eyebrow quiet center" data-reveal="fade">Trusted by brands &amp; communities across the UAE</div>
     <div class="marquee-wrap">
       <div class="marquee">
         <span>AGAFI Group</span><span class="outline">Suriya Fans Club UAE</span><span>Mohanlal Fans Club UAE</span><span class="outline">Hala Mohanlal UAE</span><span>AGAFI Creative</span><span class="outline">Star Galleria Cinemas</span>
@@ -80,17 +85,8 @@
 
   <!-- STATEMENT (scroll-lit words) -->
   <section class="statement-sec">
-    <div class="eyebrow" data-reveal="fade">Our story</div>
-    <p class="statement" data-words>AJK Visual Studio is a Dubai studio for film, edit and colour. We turn ideas into images people remember — from 4K brand films for AGAFI Group to fan mashups watched by millions.</p>
-  </section>
-
-  <!-- REEL -->
-  <section id="reel" class="reel">
-    <div class="reel-frame" data-cursor="Play" data-project="showreel">
-      <video id="reelVideo" src="media/hero-loop.mp4" poster="media/hero-loop-poster.jpg" muted loop playsinline></video>
-      <div class="reel-cap"><span class="eyebrow">Showreel · 2026</span><span class="reel-title">AJK Showreel</span></div>
-      <div class="reel-play"><span>▶</span></div>
-    </div>
+    <div class="eyebrow" data-reveal="fade">Invisible craft. Unmissable impact.</div>
+    <p class="statement" data-words>We don't add effects for the sake of it. We find the feeling a story needs — then shoot, cut, grade and composite until every frame earns its place on screen.</p>
   </section>
 
   <!-- WORK -->
@@ -98,7 +94,8 @@
     <div class="sec-head">
       <div>
         <div class="clip"><div class="eyebrow" data-reveal="mask">Selected work</div></div>
-        <h2 class="h2"><span class="line"><span data-reveal="mask">Stories we've</span></span><span class="line"><span data-reveal="mask" data-delay="120"><span class="outline">brought</span> to light.</span></span></h2>
+        <h2 class="h2"><span class="line"><span data-reveal="mask">Frames that</span></span><span class="line"><span data-reveal="mask" data-delay="120"><span class="outline">move</span> people.</span></span></h2>
+        <p class="sub" data-reveal="up" data-delay="250">From luxury brand films to fan mashups watched by millions — every cut serves the story first.</p>
       </div>
       <div class="filters" id="filters"></div>
     </div>
@@ -110,9 +107,9 @@
     <div class="eyebrow" data-reveal="fade">In figures</div>
     <div class="facts">
       <div class="fact" data-reveal="up"><b data-count="6.5" data-dec="1">0</b><i>M</i><p>views on a single reel</p></div>
-      <div class="fact" data-reveal="up" data-delay="100"><b data-count="10">0</b><i>+</i><p>projects delivered</p></div>
-      <div class="fact" data-reveal="up" data-delay="200"><b data-count="4">0</b><i>K</i><p>cinema-grade masters</p></div>
-      <div class="fact" data-reveal="up" data-delay="300"><b data-count="5">0</b><i></i><p>brands &amp; communities</p></div>
+      <div class="fact" data-reveal="up" data-delay="100"><b data-count="6">0</b><i>+</i><p>years of craft in Dubai</p></div>
+      <div class="fact" data-reveal="up" data-delay="200"><b data-count="10">0</b><i>M+</i><p>social engagements driven</p></div>
+      <div class="fact" data-reveal="up" data-delay="300"><b data-count="4">0</b><i>K</i><p>cinema-grade masters</p></div>
     </div>
   </section>
 
@@ -120,40 +117,40 @@
   <section id="services" class="services">
     <div class="sec-head">
       <div>
-        <div class="clip"><div class="eyebrow" data-reveal="mask">Services</div></div>
-        <h2 class="h2"><span class="line"><span data-reveal="mask">What we do</span></span><span class="line"><span data-reveal="mask" data-delay="120"><span class="outline">best.</span></span></span></h2>
+        <div class="clip"><div class="eyebrow" data-reveal="mask">The craft</div></div>
+        <h2 class="h2"><span class="line"><span data-reveal="mask">Story. Light.</span></span><span class="line"><span data-reveal="mask" data-delay="120"><span class="outline">Finish.</span></span></span></h2>
+        <p class="sub" data-reveal="up" data-delay="250">We sit beside brands, creators and fan communities from the first idea to the final export — and let the work do the talking.</p>
       </div>
     </div>
-    <div class="svc-cols">
-      <div class="svc-col" data-reveal="up">
-        <h3>Film + Post</h3>
-        <ul>
-          <li><span>Brand films &amp; commercials</span><b>↗</b></li>
-          <li><span>Editing, mashups &amp; reels</span><b>↗</b></li>
-          <li><span>Cinematic colour grading</span><b>↗</b></li>
-          <li><span>4K mastering &amp; delivery</span><b>↗</b></li>
-        </ul>
-      </div>
-      <div class="svc-col" data-reveal="up" data-delay="150">
-        <h3>VFX + Design</h3>
-        <ul>
-          <li><span>3D logo reveals (Blender)</span><b>↗</b></li>
-          <li><span>Cinematic title sequences</span><b>↗</b></li>
-          <li><span>Key art, posters &amp; social</span><b>↗</b></li>
-          <li><span>Logo &amp; brand identity</span><b>↗</b></li>
-        </ul>
-      </div>
+    <div class="svc-cards">
+      <article class="svc-card" data-reveal="up"><span class="num">01</span><h3>Brand films &amp; commercials</h3><p>Luxury and retail films that feel premium in the first second — shot, cut and mastered in 4K.</p></article>
+      <article class="svc-card" data-reveal="up" data-delay="100"><span class="num">02</span><h3>Edits, mashups &amp; reels</h3><p>Rhythm-driven cuts built for the big screen and the scroll — the kind people replay and share.</p></article>
+      <article class="svc-card" data-reveal="up" data-delay="200"><span class="num">03</span><h3>Colour &amp; finishing</h3><p>Cinematic grades that give every frame mood, depth and a look that belongs to you.</p></article>
+      <article class="svc-card" data-reveal="up"><span class="num">04</span><h3>VFX, 3D &amp; titles</h3><p>Blender logo reveals, title sequences and compositing that audiences feel but never notice.</p></article>
+      <article class="svc-card" data-reveal="up" data-delay="100"><span class="num">05</span><h3>AI film making</h3><p>AI-directed scenes and worlds, blended with real footage until the seams disappear.</p></article>
+      <article class="svc-card" data-reveal="up" data-delay="200"><span class="num">06</span><h3>Key art &amp; identity</h3><p>Posters, social formats, logos and product design — one visual language, every touchpoint.</p></article>
     </div>
   </section>
 
-  <!-- STUDIO: particle logo -->
-  <section id="studio" class="studio">
-    <canvas id="logoCanvas"></canvas>
-    <div class="studio-text">
-      <div class="clip"><div class="eyebrow" data-reveal="mask">The studio</div></div>
-      <h2 class="h2"><span class="line"><span data-reveal="mask">Small team.</span></span><span class="line"><span data-reveal="mask" data-delay="120"><span class="outline">Cinema</span> mindset.</span></span></h2>
-      <p class="lead" data-reveal="up" data-delay="300">Every project gets the same attention: story first, then craft, then the details nobody notices until they're missing.</p>
-      <span class="hint" data-reveal="fade" data-delay="500">Move through the logo</span>
+  <!-- FOUNDER -->
+  <section id="founder" class="founder">
+    <div class="founder-media" data-reveal="fade">
+      <img src="media/founder.webp" alt="Akash John Kennedy, Founder &amp; CEO of AJK Visual Studio" loading="lazy">
+      <span class="founder-tag eyebrow">Founder &amp; CEO</span>
+    </div>
+    <div class="founder-text">
+      <div class="clip"><div class="eyebrow" data-reveal="mask">Meet the founder</div></div>
+      <h2 class="h2"><span class="line"><span data-reveal="mask">Akash John</span></span><span class="line"><span data-reveal="mask" data-delay="120"><span class="outline">Kennedy.</span></span></span></h2>
+      <p class="founder-lede" data-reveal="up" data-delay="200">The eye behind every AJK frame — six years in Dubai turning brands into stories people stop for.</p>
+      <p data-reveal="up" data-delay="300">Akash is an AI filmmaker, videographer and certified marketing professional who has worked with the Malayalam and Tamil film industry. He shoots, edits, grades and adds VFX, builds 3D in Blender and directs AI films — then puts the work in front of the right audience with social media and Meta ads.</p>
+      <p data-reveal="up" data-delay="380">He founded AJK Visual Studio on one simple rule: story first, craft second, and the details nobody notices until they're missing. Today the studio works with brands across real estate, retail and luxury, and with the fan communities who fill cinemas across the UAE.</p>
+      <ul class="founder-facts" data-reveal="up" data-delay="460">
+        <li><b>6+</b><span>Years in Dubai</span></li>
+        <li><b>10+</b><span>Companies served</span></li>
+        <li><b>20K+</b><span>Photos &amp; films captured</span></li>
+        <li><b>10M+</b><span>Engagements driven</span></li>
+      </ul>
+      <div class="founder-sign" data-reveal="up" data-delay="540"><span>Akash John Kennedy</span><small>Founder &amp; CEO, AJK Visual Studio</small></div>
     </div>
   </section>
 
@@ -166,9 +163,9 @@
       </div>
     </div>
     <div class="steps">
-      <article class="step" data-reveal="up"><div class="step-img"><img src="media/sfc-blockbuster-thumb.webp" alt="" loading="lazy"></div><span class="num">01</span><h3>Imagine</h3><p>We find the idea and the feeling — script, references, look and sound.</p></article>
-      <article class="step" data-reveal="up" data-delay="120"><div class="step-img"><img src="media/ajk-logo-poster.jpg" alt="" loading="lazy"></div><span class="num">02</span><h3>Craft</h3><p>Shoot, edit, grade and composite — every frame built on purpose.</p></article>
-      <article class="step" data-reveal="up" data-delay="240"><div class="step-img"><img src="media/hala-reel-poster.jpg" alt="" loading="lazy"></div><span class="num">03</span><h3>Deliver</h3><p>Cinema-grade 4K masters and formats ready for every screen.</p></article>
+      <article class="step" data-reveal="up"><div class="step-img"><img src="media/mfc-poster-v2-thumb.webp" alt="" loading="lazy"></div><span class="num">Act 01</span><h3>Imagine</h3><p>We find the idea and the feeling first — script, references, look and sound.</p></article>
+      <article class="step" data-reveal="up" data-delay="120"><div class="step-img"><img src="media/brooch-05-thumb.webp" alt="" loading="lazy"></div><span class="num">Act 02</span><h3>Craft</h3><p>Shoot, edit, grade and composite — every frame built on purpose, never by accident.</p></article>
+      <article class="step" data-reveal="up" data-delay="240"><div class="step-img"><img src="media/hala-dance-junction-thumb.webp" alt="" loading="lazy"></div><span class="num">Act 03</span><h3>Deliver</h3><p>Cinema-grade masters and cut-downs ready for every screen, on time.</p></article>
     </div>
   </section>
 
@@ -176,9 +173,10 @@
   <section id="contact" class="contact">
     <div class="eyebrow" data-reveal="fade">Contact</div>
     <h2 class="h1 contact-title"><span class="line"><span data-reveal="mask">Let's light up</span></span><span class="line"><span data-reveal="mask" data-delay="120">your <span class="outline">next</span> frame.</span></span></h2>
+    <p class="sub" data-reveal="up" data-delay="200">Whether it's a brand film, a launch reel or a fan mashup — tell us the idea, and we'll talk scope, schedule and creative fit.</p>
     <div class="contact-row" data-reveal="up" data-delay="300">
       <!-- EDIT these with your real details -->
-      <a class="btn gold" href="mailto:hello@ajkvisualstudio.com">hello@ajkvisualstudio.com</a>
+      <a class="btn gold" href="mailto:hello@ajkvisualstudio.com">Email the studio</a>
       <a class="btn" href="https://wa.me/971000000000" target="_blank" rel="noopener">WhatsApp ↗</a>
     </div>
   </section>
@@ -186,7 +184,7 @@
   <footer class="footer">
     <div class="wordmark"><img src="media/logo-gold-thumb.webp" alt=""><span>AJK <b>Visual Studio</b></span></div>
     <div class="foot-links"><a href="https://instagram.com/" target="_blank" rel="noopener">Instagram</a><a href="https://youtube.com/" target="_blank" rel="noopener">YouTube</a><a href="#top">Back to top ↑</a></div>
-    <span class="eyebrow quiet">© <span id="year"></span> · Dubai, UAE · <span id="clock"></span></span>
+    <span class="eyebrow quiet">© <span id="year"></span> · Founded by Akash John Kennedy · Dubai · <span id="clock"></span></span>
   </footer>
 </main>
 

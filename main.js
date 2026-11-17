@@ -15,7 +15,7 @@ const PROJECTS = [
   { id:'sfc-mashup', layout:'half', cat:'Fan Club', title:'SFC UAE — Final Mashup', client:'Suriya Fans Club UAE', type:'Mashup · Edit · Color', year:'2026',
     cover:'sfc-mashup-poster.jpg', preview:'sfc-mashup-preview.mp4',
     desc:'A three-minute, high-energy mashup celebrating Suriya, built for the big screen with a matching cinematic title and key art.',
-    media:[{v:'sfc-mashup'},{v:'sfc-title'},{i:'sfc-blockbuster'}] },
+    media:[{v:'sfc-mashup'},{i:'sfc-blockbuster'}] },
   { id:'agafi-retail', layout:'half', cat:'Commercial', title:'Built To Move', client:'AGAFI Group', type:'Retail Commercial · 4K', year:'2026',
     cover:'agafi-retail-poster.jpg', preview:'agafi-retail-preview.mp4',
     desc:'A fast-cut retail commercial for AGAFI Group — rhythm, motion and product, finished in 4K.',
@@ -277,7 +277,10 @@ function initLogo(img) {
         vec4 mv = modelViewMatrix * vec4(p, 1.);
         gl_Position = projectionMatrix * mv;
         gl_PointSize = uSize * (.55 + aSeed*.9) / -mv.z;
-        vColor = aColor * (1. + f*1.4);
+        // diagonal light sweep across the logo every ~6s
+        float sweepX = mod(uTime, 6.) * 2.2 - 5.;
+        float band = smoothstep(.55, 0., abs(position.x + position.y * .5 - sweepX));
+        vColor = aColor * (1. + f*1.4) + vec3(1., .93, .78) * band * .9;
         vAlpha = clamp(1. - s*.35, .1, 1.);
       }`,
     fragmentShader: /* glsl */`
@@ -291,8 +294,13 @@ function initLogo(img) {
     const w = logoCanvas.clientWidth, h = logoCanvas.clientHeight;
     renderer.setSize(w, h, false); camera.aspect = w / h; camera.updateProjectionMatrix();
     const visH = 2 * camera.position.z * Math.tan(THREE.MathUtils.degToRad(17.5)), visW = visH * camera.aspect;
-    if (camera.aspect > 1.15) { const s = Math.min(visH * .8 * 1.11, visW * .44); group.scale.setScalar(s / W); group.position.set(visW / 2 - s / 2 - visW * .06, 0, 0); }
-    else { const s = visW * .8; group.scale.setScalar(s / W); group.position.set(0, visH * .2, 0); }
+    if (camera.aspect > 1.15) {   // desktop: upper right, above the pillars
+      const s = Math.min(visH * .5 * 1.11, visW * .3);
+      group.scale.setScalar(s / W); group.position.set(visW / 2 - s / 2 - visW * .07, visH * .17, 0);
+    } else {                      // mobile: top centre, above the headline
+      const s = Math.min(visW * .6, visH * .3 * 1.11);
+      group.scale.setScalar(s / W); group.position.set(0, visH / 2 - s * .5 - visH * .12, 0);
+    }
   }
   layout(); addEventListener('resize', layout);
 
@@ -304,14 +312,10 @@ function initLogo(img) {
     ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); mouse.copy(ndc); active = 1; });
   sec.addEventListener('pointerleave', () => active = 0);
 
-  gsap.timeline({ scrollTrigger: { trigger: sec, start: 'top bottom', end: 'bottom top', scrub: true } })
-    .fromTo(u.uScatter, { value: 1.4 }, { value: 0, duration: .45, ease: 'none' })
-    .to(u.uScatter, { value: 0, duration: .25 })
-    .to(u.uScatter, { value: .9, duration: .3, ease: 'none' });
-
-  let visible = false;
+  let visible = true;
   new IntersectionObserver(([e]) => visible = e.isIntersecting).observe(logoCanvas);
   return {
+    u, group,
     render(t) {
       if (!visible) return;
       u.uTime.value = t;
@@ -367,6 +371,14 @@ function intro() {
       lenis.start();
     }, '-=.5')
     .from('.nav', { opacity: 0, y: -16, duration: 1.2, ease: 'expo.out' }, '-=.3');
+  if (logoFx) {
+    // logo assembles from a gold vortex, then scatters as you scroll away
+    gsap.fromTo(logoFx.group.rotation, { z: -1.2 }, { z: 0, duration: 3.2, ease: 'expo.out', delay: .5 });
+    gsap.to(logoFx.u.uScatter, { value: 0, duration: 3.2, ease: 'expo.out', delay: .5, onComplete: () => {
+      ScrollTrigger.create({ trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true,
+        onUpdate: s => { logoFx.u.uScatter.value = s.progress * 1.2; } });
+    } });
+  }
   if (stage) {
     gsap.to(stage.u.uIntro, { value: 1, duration: 2.4, ease: 'power2.out', delay: .6 });
     gsap.to(stage.u.uScroll, { value: 1, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
@@ -442,22 +454,23 @@ function closeProject() {
 }
 document.getElementById('ovClose').addEventListener('click', closeProject);
 addEventListener('keydown', e => { if (e.key === 'Escape' && overlay.classList.contains('open')) closeProject(); });
-document.querySelector('.reel-frame').addEventListener('click', e => openProject(e.currentTarget.dataset.project));
+document.querySelector('.hero-reel').addEventListener('click', e => openProject(e.currentTarget.dataset.project));
 
 /* =========================================================
    SCROLL EXTRAS
    ========================================================= */
-gsap.fromTo('.reel-frame', { clipPath: 'inset(8% 6% 8% 6%)' }, { clipPath: 'inset(0% 0% 0% 0%)', ease: 'none',
-  scrollTrigger: { trigger: '.reel-frame', start: 'top bottom', end: 'center center', scrub: true } });
-gsap.to('.reel-frame video', { scale: 1, ease: 'none', scrollTrigger: { trigger: '.reel-frame', start: 'top bottom', end: 'bottom top', scrub: true } });
+gsap.fromTo('.founder-media img', { yPercent: -6 }, { yPercent: 6, ease: 'none',
+  scrollTrigger: { trigger: '.founder', start: 'top bottom', end: 'bottom top', scrub: true } });
+document.querySelectorAll('.svc-card').forEach(c => c.addEventListener('pointermove', e => {
+  const r = c.getBoundingClientRect();
+  c.style.setProperty('--mx', (e.clientX - r.left) + 'px'); c.style.setProperty('--my', (e.clientY - r.top) + 'px');
+}));
 document.querySelectorAll('[data-count]').forEach(el => {
   const end = +el.dataset.count, dec = +(el.dataset.dec || 0), o = { v: 0 };
   gsap.to(o, { v: end, duration: 2.2, ease: 'power3.out', scrollTrigger: { trigger: el, start: 'top 90%' }, onUpdate: () => el.textContent = o.v.toFixed(dec) });
 });
 const nav = document.querySelector('.nav');
 ScrollTrigger.create({ start: 0, end: 'max', onUpdate: s => nav.classList.toggle('scrolled', s.scroll() > 60) });
-const reelVideo = document.getElementById('reelVideo');
-new IntersectionObserver(([e]) => e.isIntersecting ? reelVideo.play().catch(() => {}) : reelVideo.pause()).observe(reelVideo);
 
 /* =========================================================
    CURSOR
