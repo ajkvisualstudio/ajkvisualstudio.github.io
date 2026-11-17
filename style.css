@@ -267,6 +267,28 @@ html:not(.js) .statement>span{color:var(--ink)}
 .btn:hover{border-color:var(--ink)}
 .btn.gold{background:var(--gold);color:var(--stage);border-color:var(--gold)}
 .btn.gold:hover{background:var(--ink);border-color:var(--ink)}
+/* contact form */
+.cform{display:grid;gap:26px;max-width:980px;margin-top:10px}
+.cf-row{display:grid;grid-template-columns:1fr 1fr;gap:26px}
+.cf{position:relative;display:block}
+.cf input,.cf textarea,.cf select{width:100%;font:inherit;font-size:clamp(17px,1.5vw,21px);font-weight:300;color:var(--ink);background:transparent;border:0;border-bottom:1px solid var(--line-strong);padding:28px 0 12px;outline:none;border-radius:0;resize:vertical;transition:border-color .4s;appearance:none;-webkit-appearance:none}
+.cf select{cursor:pointer;background-image:linear-gradient(45deg,transparent 50%,var(--gold) 50%),linear-gradient(135deg,var(--gold) 50%,transparent 50%);background-position:calc(100% - 14px) 60%,calc(100% - 8px) 60%;background-size:6px 6px;background-repeat:no-repeat}
+.cf select option{background:var(--raised);color:var(--ink)}
+.cf span{position:absolute;left:0;top:30px;font-size:clamp(17px,1.5vw,21px);color:var(--ink-subtle);pointer-events:none;transition:all .4s var(--ease);transform-origin:left top}
+.cf input:focus,.cf textarea:focus,.cf select:focus{border-color:var(--gold)}
+.cf input:focus+span,.cf input:not(:placeholder-shown)+span,.cf textarea:focus+span,.cf textarea:not(:placeholder-shown)+span,.cf select:focus+span,.cf select:valid+span{top:4px;font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold)}
+.cf.err input,.cf.err textarea,.cf.err select{border-color:#c96a5a}
+.cf-foot{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+.cf-foot .btn b{font-weight:300;margin-left:8px;transition:transform .4s var(--ease)}
+.cf-foot .btn:hover b{transform:translateX(4px)}
+.cf-foot button{font:inherit;cursor:pointer}
+.cf-foot button:disabled{opacity:.6;cursor:wait}
+.cf-status{font-size:14px;color:var(--ink-muted);flex-basis:100%;min-height:1.5em}
+.cf-status.ok{color:var(--gold)}
+.cf-status.bad{color:#d98a7c}
+.hp{position:absolute;left:-9999px;opacity:0}
+@media (max-width:700px){.cf-row{grid-template-columns:1fr}}
+
 .footer{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:20px;padding:30px var(--gutter);border-top:1px solid var(--line)}
 .foot-links{display:flex;gap:28px;font-size:14px;color:var(--ink-soft)}
 .foot-links a:hover{color:var(--gold)}

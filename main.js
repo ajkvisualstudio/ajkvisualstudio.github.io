@@ -565,6 +565,33 @@ document.addEventListener('pointerover', e => {
 });
 
 /* =========================================================
+   CONTACT FORM (Web3Forms → Gmail)
+   ========================================================= */
+const form = document.getElementById('contactForm');
+const cfStatus = document.getElementById('cfStatus'), cfSend = document.getElementById('cfSend');
+form.addEventListener('submit', async e => {
+  e.preventDefault();
+  let ok = true;
+  form.querySelectorAll('[required]').forEach(f => {
+    const bad = !f.value.trim() || (f.type === 'email' && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(f.value));
+    f.closest('.cf').classList.toggle('err', bad); if (bad) ok = false;
+  });
+  if (!ok) { cfStatus.className = 'cf-status bad'; cfStatus.textContent = 'Please fill in the highlighted fields.'; return; }
+  if (form.access_key.value.startsWith('YOUR_')) { cfStatus.className = 'cf-status bad'; cfStatus.textContent = 'The form is not connected yet — please use WhatsApp for now.'; return; }
+  cfSend.disabled = true; cfStatus.className = 'cf-status'; cfStatus.textContent = 'Sending…';
+  try {
+    const res = await fetch('https://api.web3forms.com/submit', { method: 'POST', headers: { Accept: 'application/json' }, body: new FormData(form) });
+    const data = await res.json();
+    if (!data.success) throw new Error(data.message);
+    form.reset();
+    cfStatus.className = 'cf-status ok'; cfStatus.textContent = 'Thank you — your message is on its way. We usually reply within a day.';
+  } catch (err) {
+    cfStatus.className = 'cf-status bad'; cfStatus.textContent = 'Something went wrong. Please try again in a moment.';
+  } finally { cfSend.disabled = false; }
+});
+form.querySelectorAll('[required]').forEach(f => f.addEventListener('input', () => f.closest('.cf').classList.remove('err')));
+
+/* =========================================================
    MISC
    ========================================================= */
 document.getElementById('year').textContent = new Date().getFullYear();

@@ -181,11 +181,30 @@
     <div class="eyebrow" data-reveal="fade">Contact</div>
     <h2 class="h1 contact-title"><span class="line"><span data-reveal="mask">Let's light up</span></span><span class="line"><span data-reveal="mask" data-delay="120">your <span class="outline">next</span> frame.</span></span></h2>
     <p class="sub" data-reveal="up" data-delay="200">Whether it's a brand film, a launch reel or a fan mashup — tell us the idea, and we'll talk scope, schedule and creative fit.</p>
-    <div class="contact-row" data-reveal="up" data-delay="300">
-      <!-- EDIT these with your real details -->
-      <a class="btn gold" href="mailto:hello@ajkvisualstudio.com">Email the studio</a>
-      <a class="btn" href="https://wa.me/971000000000" target="_blank" rel="noopener">WhatsApp ↗</a>
-    </div>
+    <!-- Contact form → Web3Forms → your Gmail. Put your access key in value="" below. -->
+    <form class="cform" id="contactForm" data-reveal="up" data-delay="300" novalidate>
+      <input type="hidden" name="access_key" value="6600e460-320d-4a2e-b28a-2ac76514f2ee">
+      <input type="hidden" name="subject" value="New project enquiry — AJK Visual Studio website">
+      <input type="hidden" name="from_name" value="AJK Visual Studio website">
+      <input type="checkbox" name="botcheck" class="hp" tabindex="-1" autocomplete="off">
+      <div class="cf-row">
+        <label class="cf"><input name="name" required placeholder=" " autocomplete="name"><span>Your name</span></label>
+        <label class="cf"><input name="email" type="email" required placeholder=" " autocomplete="email"><span>Email</span></label>
+      </div>
+      <div class="cf-row">
+        <label class="cf"><input name="phone" type="tel" placeholder=" " autocomplete="tel"><span>Phone / WhatsApp (optional)</span></label>
+        <label class="cf cf-select"><select name="project" required>
+          <option value="" disabled selected hidden></option>
+          <option>Brand film / commercial</option><option>Edit, mashup or reel</option><option>Colour grading</option>
+          <option>VFX, 3D or titles</option><option>AI film</option><option>Key art, posters or identity</option><option>Something else</option>
+        </select><span>What do you need?</span></label>
+      </div>
+      <label class="cf"><textarea name="message" rows="4" required placeholder=" "></textarea><span>Tell us about the project</span></label>
+      <div class="cf-foot">
+        <button class="btn gold" type="submit" id="cfSend">Send message <b>→</b></button>
+        <p class="cf-status" id="cfStatus" role="status" aria-live="polite"></p>
+      </div>
+    </form>
   </section>
 
   <footer class="footer">
