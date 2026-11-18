@@ -141,11 +141,12 @@ function initStage() {
         col = mix(vec3(l), col, .78) * vec3(1.05, 1., .9);
         // stage spotlight
         float spot = smoothstep(.65, 0., dist);
-        col *= .4 + .95 * spot;
+        col *= .34 + .9 * spot;
         col += vec3(.79, .67, .47) * .11 * smoothstep(.32, 0., dist);
         // scrims: left + bottom for the headline
-        col *= mix(.42, 1., smoothstep(0., .7, uv.x));
         col *= mix(.35, 1., smoothstep(0., .5, uv.y));
+        // calm, darker centre so the logo and title read cleanly
+        col *= mix(.38, 1., smoothstep(.12, .62, length((uv - vec2(.5, .5)) * vec2(aspect * .55, 1.))));
         col *= 1. - smoothstep(.55, 1.25, length((uv - .5) * vec2(aspect * .75, 1.)));
         // film grain
         col += (hash(uv * uRes + fract(uTime * 7.) * 91.) - .5) * .055;
@@ -233,9 +234,7 @@ function tick() {
 /* =========================================================
    PRELOADER → HERO
    ========================================================= */
-const identVideo = document.getElementById('identVideo');
 const videoReady = new Promise(r => { if (heroVideo.readyState >= 2) r(); heroVideo.addEventListener('loadeddata', r, { once: true }); setTimeout(r, 2500); });
-const identReady = new Promise(r => { if (identVideo.readyState >= 2) r(); identVideo.addEventListener('loadeddata', r, { once: true }); setTimeout(r, 2500); });
 const pageReady = new Promise(r => { if (document.readyState === 'complete') return r(); addEventListener('load', r); setTimeout(r, 2500); });   // don't wait for big videos
 
 // loader: the AJK logo reveals itself, the name types in, a gold line draws
@@ -252,7 +251,7 @@ const loaderIn = new Promise(r => {
     .to({}, { duration: .6 });   // hold on the logo for a beat
 });
 
-Promise.all([videoReady, identReady, pageReady, loaderIn]).then(() => {
+Promise.all([videoReady, pageReady, loaderIn]).then(() => {
   stage = initStage();
   heroVideo.play().catch(() => {});
   tick();
@@ -267,21 +266,8 @@ function intro() {
     .to('.lp-bot', { yPercent: 100, duration: 1.2, ease: 'expo.inOut' }, '<')
     .set('#loader', { display: 'none' });
   if (stage) gsap.to(stage.u.uIntro, { value: 1, duration: 2.4, ease: 'power2.out', delay: .7 });
-  // studio logo film starts from the beginning as the hero opens
-  identVideo.currentTime = 0; identVideo.play().catch(() => {});
-  gsap.fromTo('.hero-ident', { opacity: 0, scale: .9 }, { opacity: 1, scale: 1, duration: 2, ease: 'expo.out', delay: 1 });
-  gsap.to('.hero-ident', { yPercent: -25, opacity: 0, ease: 'none', immediateRender: false,
-    scrollTrigger: { trigger: '.hero', start: '20% top', end: 'bottom top', scrub: true } });
   setTimeout(revealHero, 900);
 }
-// plays the reveal once and holds on the gold logo; replays when you scroll back up to it
-let identLeft = false;
-new IntersectionObserver(([e]) => {
-  if (!e.isIntersecting) { identLeft = true; identVideo.pause(); return; }
-  if (identLeft && identVideo.ended) identVideo.currentTime = 0;
-  identLeft = false;
-  if (!identVideo.ended) identVideo.play().catch(() => {});
-}).observe(identVideo);
 
 function revealHero() {
   document.querySelectorAll('.hero [data-reveal]').forEach(el => {
@@ -291,7 +277,7 @@ function revealHero() {
   lenis.start();
   gsap.fromTo('.nav', { opacity: 0, y: -16 }, { opacity: 1, y: 0, duration: 1.2, ease: 'expo.out' });
   if (stage) gsap.to(stage.u.uScroll, { value: 1, ease: 'none', scrollTrigger: { trigger: '.hero', start: 'top top', end: 'bottom top', scrub: true } });
-  gsap.to('.hero-body', { yPercent: -18, opacity: 0, ease: 'none', scrollTrigger: { trigger: '.hero', start: '30% top', end: 'bottom top', scrub: true } });
+  gsap.to('.hero-center', { yPercent: -18, opacity: 0, ease: 'none', scrollTrigger: { trigger: '.hero', start: '30% top', end: 'bottom top', scrub: true } });
 }
 
 /* =========================================================
